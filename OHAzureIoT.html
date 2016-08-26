@@ -1,0 +1,57 @@
+<script type="text/javascript">
+    RED.nodes.registerType( 'OH-AzureIoT', {
+        category: 'cloud',
+        color: '#C7E9C0',
+        defaults: {
+            name: { value: "OH converter" },
+			openhabUrl: { value: "http://localhost:8080" },
+			iotHubName: { value: "<yourhub>.azure-devices.net" },
+			devicePrefix: { value: "OH1" },
+			addTimestamp: { value: "yes" }
+        },
+        inputs:1,
+        outputs:1,
+        icon: "feed.png",
+        label: function() {
+            return this.name || "OH-AzureIoT";
+        },
+		credentials: {
+			connectionString: {type: "text"}
+		}
+    });
+</script>
+
+<script type="text/x-red" data-template-name="OH-AzureIoT">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+		<label for="node-input-connectionString"><i class="fa fa-bookmark"></i> Connection String</label>
+        <input type="text" id="node-input-connectionString">
+    </div>
+    <div class="form-row">
+        <label for="node-input-openhabUrl"><i class="icon-tag"></i> OpenHab URL</label>
+        <input type="text" id="node-input-openhabUrl">
+    </div>
+    <div class="form-row">
+        <label for="node-input-iotHubName"><i class="icon-tag"></i> Azure IoT Hub</label>
+        <input type="text" id="node-input-iotHubName">
+    </div>
+    <div class="form-row">
+        <label for="node-input-devicePrefix"><i class="icon-tag"></i> Device Prefix</label>
+        <input type="text" id="node-input-devicePrefix" value="OH1">
+    </div>
+    <div class="form-row">
+        <label for="node-input-addTimestamp"><i class="icon-tag"></i> Timestamp?</label>
+        <select id="node-input-addTimestamp">
+			<option>yes</option>
+			<option>no</option>
+		</select>
+    </div>
+
+</script>
+
+<script type="text/x-red" data-help-name="OH-AzureIoT">
+    <p>Converts OpenHab MQTT persistence stream to JSON and sends to an Azure IoT hub</p>
+</script>
