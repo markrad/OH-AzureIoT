@@ -151,8 +151,8 @@ module.exports = function(RED) {
 	function printResultFor(op) {
 		return function printResult(err, res) {
 			
-			if (err) console.log(op + ' error: ' + err.toString());
-			if (res) console.log(op + ' status: ' + res.constructor.name);
+			if (err) node.log(op + ' error: ' + err.toString());
+			if (res) node.log(op + ' status: ' + res.constructor.name);
 		};
 	}
 
