@@ -20,7 +20,7 @@ module.exports = function(RED) {
 	
 	var getSAS = function(device) {
 		
-		//HostName=OHHub.azure-devices.net;DeviceId=OpenHab1;SharedAccessKey=ldPHH8LbixX7bHhCKz9c8bZsIEkx/G0959lvoyt3XXg=
+		//HostName=OHHub.azure-devices.net;DeviceId=OpenHab1;SharedAccessKey=
 
 		return 'HostName=' + iotHubName + ';DeviceId=' + device.deviceId + ';SharedAccessKey=' + device.connectionString;
 	}
