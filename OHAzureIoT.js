@@ -59,6 +59,29 @@ module.exports = function(RED) {
 		}
 	};
 	
+	var fixData = function(data) {
+		
+		if (data.deviceType == 'DateTimeItem') {
+			
+			var re = /\[time=(\d*),/;
+			
+			//node.log('---------------------------------------------------------------------');
+			//node.log('data.deviceState=' + data.deviceState);
+			
+			var result = re.exec(data.deviceState);
+			
+			//node.log('result=' + util.inspect(result));
+			//node.log('result[0]=' + result[0] + '; result[1]=' + result[1]);
+			var jsDate = new Date(parseInt(result[1], 10));
+			
+			//node.log('jsDate=' + jsDate);
+			
+			data.deviceState = jsDate;
+		}
+		
+		return data;
+	}
+	
 	var sendMessage = function(deviceId, deviceState, callback) {
 		
 		waterfall([
@@ -133,6 +156,8 @@ module.exports = function(RED) {
 				if (addTimestamp == 'yes') {
 					data['timestamp'] = new Date();
 				}
+				
+				data = fixData(data);
 				
 				var jsonData = JSON.stringify(data);
 				var message = new Message(jsonData);
