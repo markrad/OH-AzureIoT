@@ -13,6 +13,7 @@ module.exports = function(RED) {
 	var iotHubName;
 	var devicePrefix;			// Not actually sure if this is a good idea or not - not yet implemented
 	var addTimestamp;
+	var foundDevices = true;	// If we can't find the OpenHab web interface there's not much point doing anything else
 
 
 	var Message = require('azure-iot-device').Message;
@@ -20,7 +21,7 @@ module.exports = function(RED) {
 	
 	var getSAS = function(device) {
 		
-		//HostName=OHHub.azure-devices.net;DeviceId=OpenHab1;SharedAccessKey=
+		//HostName=OHHub.azure-devices.net;DeviceId=OpenHab1;SharedAccessKey=ldPHH8LbixX7bHhCKz9c8bZsIEkx/G0959lvoyt3XXg=
 
 		return 'HostName=' + iotHubName + ';DeviceId=' + device.deviceId + ';SharedAccessKey=' + device.connectionString;
 	}
@@ -84,6 +85,12 @@ module.exports = function(RED) {
 	
 	var sendMessage = function(deviceId, deviceState, callback) {
 		
+		if (!foundDevices) {
+			var error = new('NO_DEVICES');
+			callback(error, null);
+			return;
+		}
+		
 		waterfall([
 			// Look for the device in the hashtable. If it's not there add it.
 			function(callback) {
@@ -103,8 +110,8 @@ module.exports = function(RED) {
 							callback(null, devices[deviceId]);
 						}
 						else {
-							callback(err, null);
 							node.log("Failed to acquire OpenHab items: " + err + ' ' + response.statusCode);
+							callback(err, null);
 						}
 					});
 				}
@@ -151,22 +158,28 @@ module.exports = function(RED) {
 			// Send the message to the IoT hub
 			function(device, callback) {
 				
-				var data = { deviceId: device.deviceId, deviceState: deviceState, deviceType: device.type};
-				
-				if (addTimestamp == 'yes') {
-					data['timestamp'] = new Date();
-				}
-				
-				data = fixData(data);
-				
-				var jsonData = JSON.stringify(data);
-				var message = new Message(jsonData);
-				
-				node.log('sending: data=' + util.inspect(jsonData));
+				try {
+					var data = { deviceId: device.deviceId, deviceState: deviceState, deviceType: device.type};
+					
+					if (addTimestamp == 'yes') {
+						data['timestamp'] = new Date();
+					}
+					
+					data = fixData(data);
+					
+					var jsonData = JSON.stringify(data);
+					var message = new Message(jsonData);
+					
+					node.log('sending: data=' + util.inspect(jsonData));
 
-				device.client.sendEvent(message, printResultFor('send'));
-				
-				callback(null, data);
+					device.client.sendEvent(message, printResultFor('send'));
+					
+					callback(null, data);
+				}
+				catch (e) {
+					node.log('Failed to send data: ' + e.toString());
+					callback(e, null);
+				}
 			}
 		], function(err, result) {
 			callback(err, result);
@@ -215,14 +228,20 @@ module.exports = function(RED) {
 				}
 			}
 			else {
-				if (callback) {
-					callback(null, device.authentication.SymmetricKey.primaryKey);
+				try {
+					if (callback) {
+						callback(null, device.authentication.SymmetricKey.primaryKey);
+					}
+				}
+				catch (e)
+				{
+					callback(new Error('Probably didn\'t find a SymmetricKey', null));
 				}
 			}
 		});
 	};
 	
-    function LowerCaseNode(config) {
+    function OHAzureIoTNode(config) {
         RED.nodes.createNode(this, config);
         node = this;
 		
@@ -251,6 +270,7 @@ module.exports = function(RED) {
 			}
 			else {
 				node.log("Failed to acquire OpenHab items: " + err);
+				foundDevices = false;
 			}
 		});
 
@@ -313,7 +333,7 @@ module.exports = function(RED) {
 		});
     }
 	
-    RED.nodes.registerType("OH-AzureIoT", LowerCaseNode, {
+    RED.nodes.registerType("OH-AzureIoT", OHAzureIoTNode, {
         credentials: {
             connectionString: { type: "text" }
         },
